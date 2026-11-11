@@ -1,38 +1,87 @@
-Mars Photos
-==================================
+# Mars Photos App 🚀🔴
 
-Mars Photos app is a demo app that shows actual images of Mars' surface. These images are
-real-life photos from Mars captured by NASA's Mars rovers. The data is stored on a Web server
-as a REST web service.
+Aplicación nativa de Android desarrollada con **Kotlin** y **Jetpack Compose** para la materia **Aplicaciones Móviles Nativas** (Sexto Nivel - Ingeniería de Software). 
 
-This app demonstrated the use of [Retrofit](https://square.github.io/retrofit/) to make REST requests to the web service, [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization) to
-handle the deserialization of the returned JSON to Kotlin data objects, and [Coil](https://coil-kt.github.io/coil/) to load images by URL.
+Esta práctica implementa paso a paso el codelab oficial de Google Android Developers: **[Cómo obtener datos de Internet](https://developer.android.com/codelabs/basic-android-kotlin-compose-getting-data-internet?hl=es-419)** (*Android Basics with Compose*).
 
-Pre-requisites
---------------
+---
 
-You need to know:
-- How to create Composable functions.
-- How to use architecture components including ViewModel.
-- How to use coroutines for long-running tasks.
-- Familiarity with lazy grid
+## 📖 Descripción del Proyecto
 
-Getting Started
----------------
+**Mars Photos** se conecta mediante solicitudes HTTP a un servicio web REST en tiempo real alojado en Google Cloud (`https://android-kotlin-fun-mars-server.appspot.com/photos`), el cual suministra información y fotografías reales de la superficie de Marte capturadas por los rovers de la NASA.
 
-1. [Install Android Studio](https://developer.android.com/studio/install.html), if you don't already
-   have it.
-2. Download the sample.
-3. Import the sample into Android Studio.
-4. Build and run the sample.
+La aplicación descarga la respuesta en formato JSON, la analiza y deserializa en objetos Kotlin (`MarsPhoto`) de manera asíncrona mediante corrutinas, y gestiona de forma reactiva los diferentes estados de la interfaz de usuario (Carga, Éxito y Error).
 
-## [Build this app through hands-on codelabs in the Android Basics with Compose Course](https://developer.android.com/courses/android-basics-compose/course)
+---
 
-### [Get data from the internet](https://developer.android.com/codelabs/basic-android-kotlin-compose-getting-data-internet)
-Learn how to use community-developed libraries to connect to a web service to retrieve and display data in your Android Kotlin compose app. 
+## 📱 Evidencias de la App en Funcionamiento
 
-### [Add repository and Manual DI](https://developer.android.com/codelabs/basic-android-kotlin-compose-add-repository)
-Learn how to improve the architecture of the app by separating the network calls into a repository.
+| Estado de Éxito (`MarsUiState.Success`) | Estado de Error / Modo Avión (`MarsUiState.Error`) | Estado de Carga (`MarsUiState.Loading`) |
+| :---: | :---: | :---: |
+| ![Success](screenshots/screen_success.png) | ![Error](screenshots/screen_error.png) | ![Loading](screenshots/screen_loading.png) |
+| **838 fotos de Marte recuperadas** | **Control de fallos de red sin cierres inesperados** | **Animación de espera durante la petición** |
 
-### [Load and display images from the internet](https://developer.android.com/codelabs/basic-android-kotlin-compose-load-images)
-Use the Coil library to load and display photos from the internet in your Android Compose app. 
+---
+
+## 🛠️ Arquitectura y Componentes Clave
+
+1. **Permiso de Internet (`AndroidManifest.xml`):**
+   * Declaración del permiso normal `<uses-permission android:name="android.permission.INTERNET" />` para permitir que la app abra sockets de red.
+2. **Cliente de Red con Retrofit 2 y OkHttp (`MarsApiService.kt`):**
+   * Configuración de `Retrofit.Builder()` con URL base y fábrica de convertidores `Json.asConverterFactory("application/json".toMediaType())`.
+   * Interfaz `MarsApiService` con función de suspensión asíncrona:
+     ```kotlin
+     @GET("photos")
+     suspend fun getPhotos(): List<MarsPhoto>
+     ```
+   * Declaración del patrón Singleton mediante `object MarsApi` con inicialización diferida (`by lazy`), evitando instancias redundantes.
+3. **Deserialización con Kotlinx Serialization (`MarsPhoto.kt`):**
+   * Clase de datos anotada con `@Serializable` para transformar el array JSON a una lista de objetos Kotlin fuertemente tipados.
+   * Uso de `@SerialName(value = "img_src") val imgSrc: String` para mapear el campo en formato snake_case del servidor a la convención camelCase recomendada en Kotlin.
+4. **Gestión de Estados con Sealed Interface (`MarsViewModel.kt`):**
+   * Interfaz sellada para restringir y hacer exhaustivos los estados de la UI:
+     ```kotlin
+     sealed interface MarsUiState {
+         data class Success(val photos: String) : MarsUiState
+         object Error : MarsUiState
+         object Loading : MarsUiState
+     }
+     ```
+   * Ejecución en subprocesos en segundo plano mediante `viewModelScope.launch`, previniendo bloqueos del hilo principal (*Main Thread*).
+   * Manejo robusto de excepciones en tiempo de ejecución (`IOException` y `HttpException`) mediante bloques `try-catch`.
+5. **Capa de Presentación Declarativa (`HomeScreen.kt`):**
+   * Renderizado condicional mediante expresión `when (marsUiState)` que despliega `LoadingScreen`, `ResultScreen` o `ErrorScreen` según corresponda.
+
+---
+
+## 🧰 Tecnologías y Bibliotecas
+
+* **Lenguaje:** Kotlin 2.1.0
+* **Framework de Interfaz:** Jetpack Compose con Material 3
+* **Arquitectura:** MVVM (Model-View-ViewModel) con Unidirectional Data Flow (UDF)
+* **Cliente HTTP:** Retrofit 2 (`2.9.0`) & OkHttp 3 (`4.11.0`)
+* **Conversión y Parsing:** Kotlinx Serialization JSON (`1.6.0`) y `retrofit2-kotlinx-serialization-converter` (`1.0.0`)
+* **Asincronía:** Kotlin Coroutines (`viewModelScope`)
+* **Herramienta de Compilación:** Gradle 8.12 con Android Gradle Plugin 8.8.0
+
+---
+
+## 🚀 Cómo Ejecutar el Proyecto
+
+1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/Erickelrojo-22/Mars-Photos-App.git
+   ```
+2. Abre la carpeta del proyecto en **Android Studio** (Ladybug o superior recomendado).
+3. Permite que Gradle sincronice las dependencias del proyecto.
+4. Selecciona un emulador Android (API 24+) o un dispositivo físico conectado con depuración USB habilitada.
+5. Presiona **Run** (`Shift + F10`) para compilar y ejecutar la app.
+
+---
+
+## 👤 Autor
+
+* **Estudiante:** Erick Alexander Moreira Bailón
+* **Carrera:** Ingeniería de Software
+* **Materia:** Aplicaciones Móviles Nativas (Sexto Nivel)
+* **GitHub:** [@Erickelrojo-22](https://github.com/Erickelrojo-22)
