@@ -16,10 +16,27 @@ La aplicación descarga la respuesta en formato JSON, la analiza y deserializa e
 
 ## 📱 Evidencias de la App en Funcionamiento
 
-| Estado de Éxito (`MarsUiState.Success`) | Estado de Error / Modo Avión (`MarsUiState.Error`) | Estado de Carga (`MarsUiState.Loading`) |
+| Estado de Éxito (`MarsUiState.Success`) | Estado de Error / Sin conexión (`MarsUiState.Error`) | Estado de Carga (`MarsUiState.Loading`) |
 | :---: | :---: | :---: |
 | ![Success](screenshots/screen_success.png) | ![Error](screenshots/screen_error.png) | ![Loading](screenshots/screen_loading.png) |
-| **838 fotos de Marte recuperadas** | **Control de fallos de red sin cierres inesperados** | **Animación de espera durante la petición** |
+| **838 registros de fotos de Marte recuperados** | **Control de fallos de red sin cierres inesperados** | **Indicador de carga durante la petición** |
+
+---
+
+### Capturas verificadas en ejecución real
+
+Las tres imágenes anteriores fueron capturadas directamente del emulador **Cupcake_API29 (Android 10, API 29, x86_64, 1080 × 1920)** el **11 de noviembre de 2026 (Ecuador, UTC−5)**, sin editar su contenido. El reloj de la barra del emulador usa UTC.
+
+- **Éxito:** inicio con conexión; mensaje observado `Success: 838 Mars photos retrieved`.
+- **Carga:** reinicio con la red del emulador temporalmente ralentizada (retardo de 5000 ms y velocidad GSM), sin modificar el código.
+- **Error:** Wi-Fi y datos móviles deshabilitados; mensaje observado `Failed to load`.
+- **Recuperación:** conexión restablecida y reinicio; se verificaron nuevamente 838 registros. Esta versión no tiene botón de reintento.
+
+El alcance de este codelab es mostrar la **cantidad de registros**, no la galería de imágenes, que se desarrolla en un codelab posterior. Las 838 entradas corresponden a la respuesta observada y pueden variar si cambia el servidor.
+
+**[Descargar informe editable en Word](docs/Evidencias_Mars_Photos.docx)** · [Procedimiento y huellas de las capturas](screenshots/README.md)
+
+Validación: `gradlew.bat assembleDebug` con **JDK 17** → `BUILD SUCCESSFUL`. Si el JDK incluido en una versión más reciente de Android Studio es incompatible con Gradle 8.12, selecciona JDK 17 para Gradle.
 
 ---
 
@@ -47,7 +64,7 @@ La aplicación descarga la respuesta en formato JSON, la analiza y deserializa e
          object Loading : MarsUiState
      }
      ```
-   * Ejecución en subprocesos en segundo plano mediante `viewModelScope.launch`, previniendo bloqueos del hilo principal (*Main Thread*).
+   * Solicitud asíncrona desde `viewModelScope.launch` con la función suspendida de Retrofit, sin bloquear el hilo principal.
    * Manejo robusto de excepciones en tiempo de ejecución (`IOException` y `HttpException`) mediante bloques `try-catch`.
 5. **Capa de Presentación Declarativa (`HomeScreen.kt`):**
    * Renderizado condicional mediante expresión `when (marsUiState)` que despliega `LoadingScreen`, `ResultScreen` o `ErrorScreen` según corresponda.
