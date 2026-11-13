@@ -23,7 +23,7 @@ class MarsViewModelTest {
     @Test
     fun getMarsPhotos_successUsesInjectedRepository() = runTest {
         val viewModel = MarsViewModel(FakeNetworkMarsPhotosRepository())
-        assertEquals(MarsUiState.Success("Success: 2 Mars photos retrieved"), viewModel.marsUiState)
+        assertEquals(MarsUiState.Success(FakeDataSource.photosList), viewModel.marsUiState)
     }
 
     @Test
@@ -34,7 +34,7 @@ class MarsViewModelTest {
         })
         assertEquals(MarsUiState.Loading, viewModel.marsUiState)
         response.complete(FakeDataSource.photosList)
-        assertEquals(MarsUiState.Success("Success: 2 Mars photos retrieved"), viewModel.marsUiState)
+        assertEquals(MarsUiState.Success(FakeDataSource.photosList), viewModel.marsUiState)
     }
 
     @Test
@@ -66,6 +66,6 @@ class MarsViewModelTest {
         assertEquals(MarsUiState.Error, viewModel.marsUiState)
         offline = false
         viewModel.getMarsPhotos()
-        assertEquals(MarsUiState.Success("Success: 2 Mars photos retrieved"), viewModel.marsUiState)
+        assertEquals(MarsUiState.Success(FakeDataSource.photosList), viewModel.marsUiState)
     }
 }
